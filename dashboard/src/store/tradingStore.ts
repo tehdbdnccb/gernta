@@ -1,0 +1,3 @@
+import {create} from 'zustand'; import {tradingApi} from '../api/trading'; import type {JournalEntry,PortfolioResponse} from '../types/trading';
+interface State{portfolio:PortfolioResponse|null;journal:JournalEntry[];loading:boolean;error:string|null;refresh:()=>Promise<void>}
+export const useTradingStore=create<State>((set)=>({portfolio:null,journal:[],loading:false,error:null,refresh:async()=>{set({loading:true,error:null});try{const [portfolio,journal]=await Promise.all([tradingApi.portfolio(),tradingApi.journal()]);set({portfolio,journal,loading:false})}catch(e){set({loading:false,error:e instanceof Error?e.message:'Unable to load dashboard'})}}}));

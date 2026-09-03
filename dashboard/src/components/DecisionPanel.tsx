@@ -1,0 +1,1 @@
+export function DecisionPanel({approved,score,reason}:{approved:boolean;score:number;reason:string|null}){return <section className="panel decision"><div className="panel-title">EXECUTION DECISION</div><div className="decision-badge">{approved?'APPROVED':'VETOED'}</div><div className="score">{score}<span>/100</span></div><p>{reason||'No blocking reason recorded.'}</p></section>}

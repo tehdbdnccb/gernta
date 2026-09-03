@@ -1,0 +1,1 @@
+export function RegimePanel({regime}:{regime:string}){return <section className="panel"><div className="panel-title">MARKET REGIME</div><div className="regime"><span className="regime-dot"/><strong>{regime}</strong></div><p>Regime detection gates the strategy before an order can reach execution.</p></section>}

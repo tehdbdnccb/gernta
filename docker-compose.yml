@@ -1,0 +1,32 @@
+services:
+  api:
+    build:
+      context: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      ENVIRONMENT: paper
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/alpha_commander
+      CORS_ORIGINS: '["http://localhost:5173","http://127.0.0.1:5173"]'
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: alpha_commander
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - alpha_commander_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d alpha_commander"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+volumes:
+  alpha_commander_pgdata:
