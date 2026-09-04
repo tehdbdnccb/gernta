@@ -1,7 +1,7 @@
 from __future__ import annotations
 import json
 from functools import lru_cache
-from pydantic import Field, field_validator
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     alpaca_api_key: str = ""
     alpaca_api_secret: str = ""
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/alpha_commander"
-    cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173", "http://127.0.0.1:5173"])
+    cors_origins_raw: str = Field(default="http://localhost:5173,http://127.0.0.1:5173", validation_alias="CORS_ORIGINS")
     ai_enabled: bool = False
     ai_provider: str = ""
     ai_api_key: str = ""
@@ -17,10 +17,12 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     model_config = SettingsConfigDict(env_file=".env", extra="ignore", case_sensitive=False)
 
-    @field_validator("cors_origins", mode="before")
-    @classmethod
-    def parse_origins(cls, value):
+    @property
+    def cors_origins(self) -> list[str]:
+        value = self.cors_origins_raw
         if isinstance(value, str):
+            if not value.strip():
+                return []
             try: return json.loads(value)
             except json.JSONDecodeError: return [x.strip() for x in value.split(",") if x.strip()]
         return value
