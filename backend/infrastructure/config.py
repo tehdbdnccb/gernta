@@ -1,8 +1,7 @@
 from __future__ import annotations
 import json
-import sys
 from functools import lru_cache
-from pydantic import Field, field_validator, ConfigDict
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -10,38 +9,32 @@ class Settings(BaseSettings):
     alpaca_api_key: str = ""
     alpaca_api_secret: str = ""
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/alpha_commander"
-    cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173", "http://127.0.0.1:5173"])
+    cors_origins: list[str] = Field(default_factory=lambda: [])
     ai_enabled: bool = False
     ai_provider: str = ""
     ai_api_key: str = ""
     ai_model: str = ""
     log_level: str = "INFO"
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore", case_sensitive=False, json_schema_extra={"cors_origins": {"json_schema_input_type": "string"}})
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore", case_sensitive=False)
 
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_origins(cls, value):
-        print(f"[DEBUG] parse_origins received: type={type(value)}, value={repr(value)}", file=sys.stderr, flush=True)
-        if isinstance(value, list):
-            print(f"[DEBUG] Already a list, returning: {value}", file=sys.stderr, flush=True)
-            return value
+        # Handle None, empty, or list already
+        if not value or isinstance(value, list):
+            return value if isinstance(value, list) else []
+        # If it's a string, try to parse it
         if isinstance(value, str):
             value = value.strip()
             if not value:
-                print(f"[DEBUG] Empty string, using defaults", file=sys.stderr, flush=True)
-                return ["http://localhost:5173", "http://127.0.0.1:5173"]
+                return []
             try:
                 parsed = json.loads(value)
-                if isinstance(parsed, list):
-                    print(f"[DEBUG] JSON parsed successfully: {parsed}", file=sys.stderr, flush=True)
-                    return parsed
-            except json.JSONDecodeError as e:
-                print(f"[DEBUG] JSON parse failed: {e}, trying comma split", file=sys.stderr, flush=True)
-            result = [x.strip() for x in value.split(",") if x.strip()]
-            print(f"[DEBUG] Comma-split result: {result}", file=sys.stderr, flush=True)
-            return result
-        print(f"[DEBUG] Unexpected type, returning as-is: {value}", file=sys.stderr, flush=True)
-        return value
+                return parsed if isinstance(parsed, list) else []
+            except json.JSONDecodeError:
+                # Fallback to comma-split
+                return [x.strip() for x in value.split(",") if x.strip()]
+        return []
 
     def validate_runtime(self) -> None:
         if self.environment not in {"paper", "live", "test"}:
@@ -56,7 +49,6 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     settings = Settings()
-    print(f"[DEBUG] Settings loaded. cors_origins={settings.cors_origins}", file=sys.stderr, flush=True)
     settings.validate_runtime()
     return settings
 

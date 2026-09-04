@@ -49,5 +49,14 @@ async def lifespan(app:FastAPI):
     yield
 
 app=FastAPI(title="ALPHA COMMANDER",version="1.0.0",lifespan=lifespan)
-app.add_middleware(CORSMiddleware,allow_origins=settings.cors_origins,allow_credentials=True,allow_methods=["GET","POST","OPTIONS"],allow_headers=["Accept","Authorization","Content-Type","Origin","User-Agent","X-Requested-With","X-Client-Order-ID"],expose_headers=["Content-Type","X-Request-ID"],max_age=86400)
+
+# CORS configuration: always include production frontend
+cors_origins = settings.cors_origins if settings.cors_origins else ["http://localhost:5173", "http://127.0.0.1:5173"]
+if "https://alpaca-commander1-one.vercel.app" not in cors_origins:
+    cors_origins.append("https://alpaca-commander1-one.vercel.app")
+
+logger.info(f"CORS origins configured: {cors_origins}")
+
+app.add_middleware(CORSMiddleware,allow_origins=cors_origins,allow_credentials=True,allow_methods=["GET","POST","OPTIONS"],allow_headers=["Accept","Authorization","Content-Type","Origin","User-Agent","X-Requested-With","X-Client-Order-ID"],expose_headers=["Content-Type","X-Request-ID"],max_age=86400)
 app.include_router(health_router); app.include_router(trading_router); app.include_router(dashboard_router)
+
