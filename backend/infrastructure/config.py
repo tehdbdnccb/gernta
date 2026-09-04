@@ -1,7 +1,5 @@
 from __future__ import annotations
-import json
 from functools import lru_cache
-from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -9,7 +7,7 @@ class Settings(BaseSettings):
     alpaca_api_key: str = ""
     alpaca_api_secret: str = ""
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/alpha_commander"
-    cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173", "http://127.0.0.1:5173"])
+    cors_origins_raw: str = "https://alpaca-commander1-one.vercel.app,http://localhost:5173,http://127.0.0.1:5173"
     ai_enabled: bool = False
     ai_provider: str = ""
     ai_api_key: str = ""
@@ -17,13 +15,9 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     model_config = SettingsConfigDict(env_file=".env", extra="ignore", case_sensitive=False)
 
-    @field_validator("cors_origins", mode="before")
-    @classmethod
-    def parse_origins(cls, value):
-        if isinstance(value, str):
-            try: return json.loads(value)
-            except json.JSONDecodeError: return [x.strip() for x in value.split(",") if x.strip()]
-        return value
+    @property
+    def cors_origins(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins_raw.split(",") if origin.strip()]
 
     def validate_runtime(self) -> None:
         if self.environment not in {"paper", "live", "test"}:
