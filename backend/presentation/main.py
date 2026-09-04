@@ -31,6 +31,8 @@ from presentation.api.trading import router as trading_router
 
 settings=get_settings()
 logger=logging.getLogger("alpha_commander")
+logger.info(f"CORS_ORIGINS raw env value: {settings.cors_origins_raw!r}")
+logger.info(f"CORS_ORIGINS parsed: {settings.cors_origins}")
 
 @asynccontextmanager
 async def lifespan(app:FastAPI):
