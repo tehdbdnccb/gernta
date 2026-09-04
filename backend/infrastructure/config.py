@@ -9,7 +9,11 @@ class Settings(BaseSettings):
     alpaca_api_key: str = ""
     alpaca_api_secret: str = ""
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/alpha_commander"
-    cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:5173", "http://127.0.0.1:5173"])
+    cors_origins: list[str] = Field(default_factory=lambda: [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://alpaca-commander1-one.vercel.app"
+    ])
     ai_enabled: bool = False
     ai_provider: str = ""
     ai_api_key: str = ""
@@ -40,3 +44,4 @@ def get_settings() -> Settings:
     settings = Settings()
     settings.validate_runtime()
     return settings
+
